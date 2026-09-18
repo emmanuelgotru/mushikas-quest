@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------------------
+# Mushika's Quest — Nine Days of Dharma
+# Netlify configuration. No build step: the game is 100% static ES modules.
+# Deploy: drag this folder onto https://app.netlify.com/drop
+# ---------------------------------------------------------------------------
+[build]
+  publish = "."
+
+# Never cache the entry point, so a new deploy goes live immediately.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+
+# Cache code + styles for a day (paths are stable within a deploy).
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    X-Content-Type-Options = "nosniff"

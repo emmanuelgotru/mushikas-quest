@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0616" />
+<title>Mushika's Quest — Nine Days of Dharma</title>
+<meta name="description" content="Mushika's Quest: Nine Days of Dharma — a mythic action-platformer. Play as Lord Ganesha's mouse, defeat the nine Asuras of vice, and earn eight Divine Boons." />
+<meta property="og:title" content="Mushika's Quest — Nine Days of Dharma" />
+<meta property="og:description" content="A 9-day metroidvania action-platformer rooted in Hindu mythology. Defeat the Asuras of vice. Earn the Divine Boons of Ganesha." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Yatra+One&family=Rajdhani:wght@500;600;700&family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Yatra+One&family=Rajdhani:wght@500;600;700&family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap" rel="stylesheet" /></noscript>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='38' r='20' fill='%23f6b93b'/%3E%3Ccircle cx='20' cy='20' r='11' fill='%23f6b93b'/%3E%3Ccircle cx='44' cy='20' r='11' fill='%23f6b93b'/%3E%3Ccircle cx='32' cy='34' r='9' fill='%238d5b3f'/%3E%3C/svg%3E" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ GAME CANVAS ============ -->
+  <canvas id="game"></canvas>
+  <div id="fx-flash"></div>
+  <div id="fx-vignette"></div>
+  <div id="fx-grain"></div>
+  <div id="fx-scanline"></div>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hidden">
+    <div class="hud-tl">
+      <div id="hud-day">
+        <span class="hud-day-num">DAY <b id="hud-daynum">1</b></span>
+        <span class="hud-day-name" id="hud-dayname">The Swamps of Jealousy</span>
+      </div>
+      <div id="hud-hearts"></div>
+      <div class="hud-meter-wrap">
+        <div class="hud-meter-label">BHAKTI</div>
+        <div class="hud-meter"><div class="hud-meter-fill" id="hud-bhakti"></div><div class="hud-meter-shine"></div></div>
+      </div>
+    </div>
+
+    <div class="hud-tr">
+      <div class="hud-count" id="hud-modaks" title="Modaks collected"><svg viewBox="0 0 24 24" class="ico"><path d="M12 3c3 4 6 5 6 9a6 6 0 0 1-12 0c0-4 3-5 6-9z" fill="currentColor"/></svg><span id="hud-modakcount">0</span><small id="hud-modaktotal">/0</small></div>
+      <div class="hud-count" id="hud-combo"><span class="combo-x">×<b id="hud-combonum">1</b></span><div class="combo-bar"><i id="hud-combobar"></i></div></div>
+      <div class="hud-count hud-timer" id="hud-timer">00:00</div>
+    </div>
+
+    <div class="hud-boons" id="hud-boons"></div>
+
+    <div id="hud-prompt" class="hidden"><span class="key" id="hud-prompt-key">F</span><span id="hud-prompt-text">Pray at Shrine</span></div>
+    <div id="hud-hint"></div>
+    <div id="hud-objective"></div>
+
+    <div id="boss-bar" class="hidden">
+      <div class="boss-name-row">
+        <span class="boss-sanskrit" id="boss-sanskrit"></span>
+        <span class="boss-name" id="boss-name"></span>
+        <span class="boss-title" id="boss-title"></span>
+      </div>
+      <div class="boss-track">
+        <div class="boss-fill" id="boss-fill"></div>
+        <div class="boss-fill-ghost" id="boss-ghost"></div>
+        <div class="boss-pips" id="boss-pips"></div>
+        <div class="boss-sheen"></div>
+      </div>
+      <div class="boss-phase" id="boss-phase"></div>
+    </div>
+
+    <div id="boss-cue" class="hidden"></div>
+    <div id="toasts"></div>
+  </div>
+
+  <!-- ============ TOUCH CONTROLS ============ -->
+  <div id="touch" class="hidden">
+    <div class="tstick" id="tstick"><div class="tknob" id="tknob"></div></div>
+    <div class="tbtns">
+      <button class="tbtn" data-act="special">✦<i>SPECIAL</i></button>
+      <button class="tbtn" data-act="attack">✕<i>SWIPE</i></button>
+      <button class="tbtn" data-act="dodge">»<i>DODGE</i></button>
+      <button class="tbtn tbtn-jump" data-act="jump">▲<i>JUMP</i></button>
+    </div>
+  </div>
+
+  <!-- ============ SCREENS ============ -->
+
+  <!-- BOOT -->
+  <div id="screen-boot" class="screen active">
+    <div class="boot-inner">
+      <div class="boot-diya"><div class="boot-flame"></div></div>
+      <h1 class="boot-title">Mushika's Quest</h1>
+      <div class="boot-sub">Nine Days of Dharma</div>
+      <div class="boot-bar"><i id="boot-fill"></i></div>
+      <div class="boot-status" id="boot-status">Kindling the first diya…</div>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div id="screen-title" class="screen">
+    <div class="title-top">
+      <div class="om-mark">ॐ</div>
+    </div>
+    <div class="title-inner">
+      <div class="logo-wrap">
+        <div class="logo-halo"></div>
+        <h1 class="logo">
+          <span class="logo-1">Mushika's</span>
+          <span class="logo-2">Quest</span>
+        </h1>
+        <div class="logo-rule"><span></span><em>Nine Days of Dharma</em><span></span></div>
+        <div class="logo-deva">मूषिकस्य यात्रा</div>
+      </div>
+      <nav class="menu" id="title-menu">
+        <button class="mbtn primary" data-act="play"><span class="mbtn-ico">▶</span><span class="mbtn-txt"><b>Begin the Quest</b><i>Start at Day 1 · continue your progress</i></span></button>
+        <button class="mbtn" data-act="levels"><span class="mbtn-ico">✦</span><span class="mbtn-txt"><b>Festival Calendar</b><i>Choose a day · revisit realms</i></span></button>
+        <button class="mbtn" data-act="codex"><span class="mbtn-ico">📜</span><span class="mbtn-txt"><b>Codex of Dharma</b><i>Mythology · boons · the nine vices</i></span></button>
+        <button class="mbtn" data-act="controls"><span class="mbtn-ico">⌨</span><span class="mbtn-txt"><b>How to Play</b><i>Controls &amp; combat tips</i></span></button>
+        <button class="mbtn" data-act="bossrush"><span class="mbtn-ico">⚔</span><span class="mbtn-txt"><b>Asura Gauntlet</b><i>Boss rush · unlocked after Day 9</i></span></button>
+        <button class="mbtn" data-act="settings"><span class="mbtn-ico">⚙</span><span class="mbtn-txt"><b>Settings</b><i>Audio · difficulty · accessibility</i></span></button>
+      </nav>
+      <div class="title-foot">
+        <span id="title-saveinfo"></span>
+        <span class="title-credit">A student tribute to the mythology of Shri Ganesha</span>
+      </div>
+    </div>
+    <button id="btn-fs" class="fs-corner" data-act="fullscreen" aria-label="Toggle fullscreen" title="Fullscreen (Alt+Enter)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+    <div class="title-side-art" aria-hidden="true"></div>
+  </div>
+
+  <!-- LEVEL SELECT -->
+  <div id="screen-levels" class="screen">
+    <header class="scr-head">
+      <button class="backbtn" data-act="back">‹ Back</button>
+      <h2>Festival Calendar <small>— the nine days before Chaturthi</small></h2>
+      <div class="head-progress"><span id="cal-progress">0%</span> purified</div>
+    </header>
+    <div class="cal-wrap">
+      <div class="cal-grid" id="cal-grid"></div>
+      <aside class="cal-panel" id="cal-panel"></aside>
+    </div>
+  </div>
+
+  <!-- CODEX -->
+  <div id="screen-codex" class="screen">
+    <header class="scr-head">
+      <button class="backbtn" data-act="back">‹ Back</button>
+      <h2>Codex of Dharma <small>— the mythology behind the mechanics</small></h2>
+      <div class="codex-tabs" id="codex-tabs">
+        <button class="ctab active" data-tab="story">The Legend</button>
+        <button class="ctab" data-tab="boons">Divine Boons</button>
+        <button class="ctab" data-tab="vices">The Nine Vices</button>
+        <button class="ctab" data-tab="mushika">Mushika</button>
+      </div>
+    </header>
+    <div class="codex-body" id="codex-body"></div>
+  </div>
+
+  <!-- STORY / CUTSCENE -->
+  <div id="screen-story" class="screen">
+    <div class="story-frame">
+      <div class="story-speaker" id="story-speaker"></div>
+      <div class="story-text" id="story-text"></div>
+      <div class="story-next">▼ <span>Space / Click to continue</span></div>
+      <button class="skipbtn" id="story-skip">Skip ›</button>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div id="screen-pause" class="screen modal">
+    <div class="panel">
+      <h2 class="panel-title">Paused <small>the festival waits</small></h2>
+      <div class="pause-stats" id="pause-stats"></div>
+      <div class="panel-btns">
+        <button class="mbtn" data-act="resume"><span class="mbtn-ico">▶</span><span class="mbtn-txt"><b>Resume</b></span></button>
+        <button class="mbtn" data-act="fullscreen"><span class="mbtn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></span><span class="mbtn-txt"><b>Fullscreen</b></span><span class="mbtn-sub">Alt+Enter</span></button>
+        <button class="mbtn" data-act="controls"><span class="mbtn-ico">⌨</span><span class="mbtn-txt"><b>Controls</b></span></button>
+        <button class="mbtn" data-act="hint"><span class="mbtn-ico">?</span><span class="mbtn-txt"><b>Hint</b></span><span class="mbtn-sub">H</span></button>
+        <button class="mbtn" data-act="settings"><span class="mbtn-ico">⚙</span><span class="mbtn-txt"><b>Settings</b></span></button>
+        <button class="mbtn" data-act="restart"><span class="mbtn-ico">↻</span><span class="mbtn-txt"><b>Restart Day</b></span></button>
+        <button class="mbtn danger" data-act="quit"><span class="mbtn-ico">⌂</span><span class="mbtn-txt"><b>Abandon to Calendar</b></span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="screen-settings" class="screen modal">
+    <div class="panel">
+      <h2 class="panel-title">Settings</h2>
+      <div class="settings-grid" id="settings-grid"></div>
+      <div class="panel-btns">
+        <button class="mbtn primary" data-act="back"><span class="mbtn-ico">✓</span><span class="mbtn-txt"><b>Done</b></span></button>
+        <button class="mbtn danger" data-act="wipe"><span class="mbtn-ico">⌫</span><span class="mbtn-txt"><b>Erase Save Data</b></span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div id="screen-controls" class="screen modal">
+    <div class="panel wide">
+      <h2 class="panel-title">How to Play</h2>
+      <div class="ctrl-cols" id="ctrl-cols"></div>
+      <div class="panel-btns"><button class="mbtn primary" data-act="back"><span class="mbtn-ico">✓</span><span class="mbtn-txt"><b>Got it</b></span></button></div>
+    </div>
+  </div>
+
+  <!-- BOON CEREMONY -->
+  <div id="screen-boon" class="screen">
+    <div class="boon-rays"></div>
+    <div class="boon-mandala"></div>
+    <div class="boon-inner">
+      <div class="boon-kicker" id="boon-kicker">The Asura is vanquished</div>
+      <div class="boon-shloka" id="boon-shloka"></div>
+      <div class="boon-shloka-tr" id="boon-shloka-tr"></div>
+      <div class="boon-icon" id="boon-icon"></div>
+      <h2 class="boon-name" id="boon-name"></h2>
+      <div class="boon-aspect" id="boon-aspect"></div>
+      <p class="boon-desc" id="boon-desc"></p>
+      <div class="boon-keys" id="boon-keys"></div>
+      <div class="boon-panel"><h3>Day <span id="boon-daynum">1</span> Complete</h3><div class="boon-stats" id="boon-stats"></div></div>
+      <button class="mbtn primary big" id="boon-continue"><span class="mbtn-ico">▶</span><span class="mbtn-txt"><b>Continue the Quest</b></span></button>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="screen-over" class="screen modal">
+    <div class="panel">
+      <h2 class="panel-title over">Mushika Falls</h2>
+      <p class="over-quote" id="over-quote"></p>
+      <div class="panel-btns">
+        <button class="mbtn primary" data-act="retry"><span class="mbtn-ico">↻</span><span class="mbtn-txt"><b>Rise Again</b><i>Restart from the last shrine</i></span></button>
+        <button class="mbtn" data-act="quit"><span class="mbtn-ico">⌂</span><span class="mbtn-txt"><b>Festival Calendar</b></span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VICTORY -->
+  <div id="screen-win" class="screen">
+    <div class="win-rays"></div>
+    <div class="win-inner" id="win-inner"></div>
+  </div>
+
+  <!-- CREDITS -->
+  <div id="screen-credits" class="screen">
+    <div class="credits-scroll" id="credits-scroll"></div>
+    <button class="skipbtn" data-act="skipcredits">Skip ›</button>
+  </div>
+
+  <div id="modal-root"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
