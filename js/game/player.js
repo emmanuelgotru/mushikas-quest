@@ -379,7 +379,7 @@ export class Player {
     }
     if (this.jumpHold > 0) {
       this.jumpHold -= dt;
-      if (!input.isDown('jump')) { const heldFor = .22 - Math.max(0, this.jumpHold); this.jumpHold = 0; if (heldFor > .13 && this.vy < -200) this.vy *= .48; }
+      if (!input.isDown('jump')) { this.jumpHold = 0; if (this.vy < -200) this.vy *= .48; }
     }
     if (this.bouncePad) { this.vy = -1120; this.bouncePad = false; G.audio.sfx('dbljump'); this.squash = .62; this.stretch = 1.4; G.particles.ring(this.x + this.w / 2, this.y + this.h, 18, '#ff9fc4', .5); }
 
@@ -407,7 +407,7 @@ export class Player {
     if (input.pressed('special')) this.useSpecial(G);
     if (input.pressed('swap')) this.cycle(1);
     for (let i = 1; i <= 8; i++) if (input.pressed('b' + i)) this.selectBoon(i - 1);
-    if ((input.pressed('surge') || (input.pressed('up') && input.isDown('down'))) && this.bhakti >= this.maxBhakti) this.useSurge(G);
+    if (input.pressed('up') && this.bhakti >= this.maxBhakti && input.isDown('down')) this.useSurge(G);
 
     // shield maintenance
     if (this.shielded) {

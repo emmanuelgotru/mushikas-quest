@@ -78,7 +78,6 @@ export class HUD {
   setTimer(str) { this.d.timer.textContent = str; }
 
   setBoons(owned, sel, cds, surgeReady) {
-    document.getElementById('t-surge')?.classList.toggle('toff', !surgeReady);
     const key = [...owned].join(',') + '|' + sel + '|' + (surgeReady ? 'S' : '');
     if (key !== this._boonKey) {
       this._boonKey = key;
@@ -188,17 +187,12 @@ export class HUD {
   hideSeals() { this._sealsEl?.remove(); this._sealsEl = null; }
 
   prompt(key, text) {
-    document.getElementById('t-interact')?.classList.remove('toff');
     this.d.prompt.classList.remove('hidden');
     this.d.promptKey.textContent = key;
     this.d.promptText.textContent = text;
   }
-  hidePrompt() { this.d.prompt.classList.add('hidden'); document.getElementById('t-interact')?.classList.add('toff'); }
+  hidePrompt() { this.d.prompt.classList.add('hidden'); }
   hint(text, dur = 4) {
-    if (this.G?.touchUI && text) text = text
-      .replace(/J swipe/g, 'Tap SWIPE').replace(/K spin/g, 'Tap SPIN')
-      .replace(/SHIFT dodge/g, 'Tap DODGE').replace(/SPACE jump/g, 'Tap JUMP')
-      .replace(/press C/g, 'tap SPECIAL').replace(/\(C\)/g, '(SPECIAL)');
     if (!text) { this.d.hint.classList.remove('on'); return; }
     if (this._bossUp) { this.toast(text, '✦', 'gold', 5200); return; }   // never overprint the boss bar
     if (this._hintText === text && this.d.hint.classList.contains('on')) return;
