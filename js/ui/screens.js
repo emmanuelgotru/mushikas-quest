@@ -265,7 +265,7 @@ export class Screens {
     const T = this.G.touchUI;
     const cards = [
       ['⇄', 'RUN', 'Move left and right', T ? 'Left stick' : 'A / D or ← →'],
-      ['▲', 'JUMP', 'Press again in mid-air to jump twice!', T ? 'JUMP button' : 'SPACE'],
+      ['▲', 'JUMP', 'Press again in mid-air to jump twice!', T ? 'JUMP button' : 'SPACE · W · ↑'],
       ['✕', 'HIT', 'Tap-tap-tap — the 3rd hit is a BIG smash!', T ? 'SWIPE button' : 'J'],
       ['◉', 'SPIN', 'Whirlwind! Hits everything around you', T ? 'SPIN button' : 'K'],
       ['»', 'DASH', 'Super-quick dodge — nothing can touch you', T ? 'DODGE button' : 'SHIFT'],

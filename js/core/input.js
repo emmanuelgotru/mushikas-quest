@@ -5,12 +5,13 @@
 const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left',
   ArrowRight: 'right', KeyD: 'right',
-  ArrowUp: 'up', KeyW: 'up',
+  ArrowUp: ['up', 'jump'], KeyW: 'jump',
   ArrowDown: 'down', KeyS: 'down',
-  Space: 'jump', KeyK: 'jump',
+  Space: 'jump',
   KeyJ: 'attack', KeyX: 'attack',
   ShiftLeft: 'dodge', ShiftRight: 'dodge', KeyL: 'dodge',
   KeyC: 'special', KeyZ: 'special',
+  KeyV: 'surge',
   KeyQ: 'swap', Tab: 'swap',
   KeyE: 'interact', KeyF: 'interact',
   Escape: 'pause', KeyP: 'pause',
@@ -24,7 +25,7 @@ const KEYMAP = {
 
 const GP_MAP = { 0: 'jump', 1: 'dodge', 2: 'special', 3: 'swap', 4: 'dodge', 5: 'special', 9: 'pause', 8: 'pause', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
 
-export const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'attack', 'dodge', 'special', 'swap', 'interact', 'pause', 'confirm'];
+export const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'attack', 'dodge', 'special', 'swap', 'interact', 'pause', 'confirm', 'surge', 'cyclone'];
 
 export class Input {
   constructor(game) {
@@ -54,15 +55,18 @@ export class Input {
       const act = (e.altKey && e.code === 'Enter') ? 'fullscreen' : KEYMAP[e.code];
       if (act) {
         if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
-        if (!e.repeat) setAct(act, true);
+        if (!e.repeat) { if (Array.isArray(act)) act.forEach((x) => setAct(x, true)); else setAct(act, true); }
         else this.held[act] = true;
       }
       this.anyKeyThisFrame = true;
       if (e.code === 'F1') { e.preventDefault(); this.g.toggleDebug?.(); }
     }, { passive: false });
 
-    window.addEventListener('keyup', (e) => { const act = (e.altKey && e.code === 'Enter') ? 'fullscreen' : KEYMAP[e.code]; if (act) setAct(act, false); });
+    window.addEventListener('keyup', (e) => { const act = (e.altKey && e.code === 'Enter') ? 'fullscreen' : KEYMAP[e.code]; if (act) { if (Array.isArray(act)) act.forEach((x) => setAct(x, false)); else setAct(act, false); } });
     window.addEventListener('blur', () => { for (const a of Object.keys(this.held)) { if (this.held[a]) this.up[a] = true; this.held[a] = false; } });
+
+    window.addEventListener('contextmenu', (e) => { if (this.g.touchUI) e.preventDefault(); });
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
 
     // touch buttons
     document.querySelectorAll('#touch .tbtn').forEach((btn) => {

@@ -452,11 +452,11 @@ class Game {
       else if (this.state === 'pause') this.resume();
       else if (['settings', 'controls', 'codex', 'levels'].includes(this.screens.current)) this.screens.back();
     }
-    if (this.state === 'howto' && (I.raw('confirm') || I.raw('jump') || I.raw('attack'))) { this.screens.back(); }
+    if (this.state === 'howto' && (I.raw('confirm') || (I.raw('jump') && !I.raw('up')) || I.raw('attack'))) { this.screens.back(); }
     if (this.screens.current === 'title' && !this.world) {
       if (I.pressed('up')) this.screens.menuMove(-1);
       if (I.pressed('down')) this.screens.menuMove(1);
-      if (I.pressed('confirm') || I.pressed('jump') || I.pressed('attack')) this.screens.menuConfirm();
+      if (I.pressed('confirm') || (I.pressed('jump') && !I.pressed('up')) || I.pressed('attack')) this.screens.menuConfirm();
     }
   }
 
@@ -579,7 +579,7 @@ class Game {
     if (c.t === dt || (c.t < dt * 1.5)) {           // just entered a step
       const T = this.touchUI;
       if (step === 0) say(T ? 'Walk with the stick' : 'Walk with A / D', T ? 'your left thumb lives here' : 'or push the left stick on touch');
-      if (step === 1) say(T ? 'Jump with the JUMP button' : 'Jump with SPACE', T ? 'tap it again mid-air to double-jump' : 'hold it a moment longer to jump higher');
+      if (step === 1) say(T ? 'Jump with the JUMP button' : 'Jump with SPACE, W or ↑', T ? 'tap it again mid-air to double-jump' : 'hold it a moment longer to jump higher');
       if (step === 2) say(T ? 'Swipe with the SWIPE button' : 'Swipe with J', 'three-hit combo — the third hit knocks back');
       if (step === 3) say(T ? 'Dodge with the DODGE button' : 'Dodge with SHIFT', 'a dodge mid-air covers great distance');
     }

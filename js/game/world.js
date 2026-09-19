@@ -218,6 +218,20 @@ export class World {
   drawWeather(ctx, G, t) {
     const env = this.data.env, col = env.weatherColor;
     ctx.save();
+    // drifting additive light-motes
+    {
+      const cw = G.camera.w, ch = G.camera.h;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 22; i++) {
+        const mx = ((i * 173.3 + t * (8 + (i % 6) * 3.5)) % (cw + 80)) - 40;
+        const my = ch * (.18 + ((i * 97) % 60) / 100) + Math.sin(t * .6 + i) * 16;
+        const al = .10 + .10 * Math.sin(t * 1.3 + i * 2.2);
+        if (al <= .02) continue;
+        ctx.globalAlpha = al; ctx.fillStyle = i % 3 ? '#ffe6a3' : '#ffffff';
+        ctx.beginPath(); ctx.arc(mx, my, 1.4 + (i % 3), 0, TAU); ctx.fill();
+      }
+      ctx.restore();
+    }
     for (const w of this.weather) {
       ctx.globalAlpha = w.a ?? .5;
       switch (env.weather) {
@@ -1040,6 +1054,46 @@ export class World {
       const g = ctx.createRadialGradient(cam.w / 2, cam.h / 2, cam.h * .3, cam.w / 2, cam.h / 2, cam.h * .95);
       g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, rgba(G.boss.meta.color2 || '#200', .38));
       ctx.fillStyle = g; ctx.fillRect(0, 0, cam.w, cam.h);
+    }
+
+    /* ---- atmosphere boost: god-rays · drifting haze · vignette · heartbeat ---- */
+    {
+      // cached ray+haze layer (rebuilt only on resize); drifted & pulsed at draw time
+      if (!this._atmoC || this._atmoC._w !== cam.w || this._atmoC._h !== cam.h) {
+        const cv = this._atmoC = document.createElement('canvas'); cv.width = Math.max(2, cam.w >> 1); cv.height = Math.max(2, cam.h >> 1); cv._w = cam.w; cv._h = cam.h;
+        const c2 = cv.getContext('2d'); c2.scale(.5, .5);
+        const rayCol = pal.accent || '#ffe6a3';
+        c2.globalCompositeOperation = 'lighter';
+        for (let r = 0; r < 5; r++) {
+          const x = (r * .23 + .06) * cam.w, wd = cam.w * .06;
+          const g2 = c2.createLinearGradient(x, 0, x + wd * 2.2, cam.h);
+          g2.addColorStop(0, rgba(rayCol, .12)); g2.addColorStop(.6, rgba(rayCol, .04)); g2.addColorStop(1, rgba(rayCol, 0));
+          c2.fillStyle = g2;
+          c2.beginPath(); c2.moveTo(x, -10); c2.lineTo(x + wd, -10);
+          c2.lineTo(x + wd * 2.6 + cam.h * .35, cam.h + 10); c2.lineTo(x + cam.h * .35, cam.h + 10);
+          c2.closePath(); c2.fill();
+        }
+        const fg = pal.fog || '#cfd8ff';
+        for (let hz = 0; hz < 3; hz++) {
+          const hx = cam.w * (.2 + .3 * hz), hy = cam.h * (.5 + .16 * hz);
+          const g3 = c2.createRadialGradient(hx, hy, 10, hx, hy, 280);
+          g3.addColorStop(0, rgba(fg, .07)); g3.addColorStop(1, rgba(fg, 0));
+          c2.fillStyle = g3; c2.beginPath(); c2.ellipse(hx, hy, 300, 90, 0, 0, TAU); c2.fill();
+        }
+      }
+      const pulse = .75 + .25 * Math.sin(t * .5);
+      const dx = Math.sin(t * .07) * 26, dy = Math.sin(t * .05 + 1.3) * 8;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = pulse;
+      ctx.drawImage(this._atmoC, dx, dy, cam.w, cam.h);
+      ctx.restore();
+
+      const hpf = p.hp / p.maxHp;
+      if (hpf <= .34 && p.hp > 0) {
+        const beat = Math.pow(Math.max(0, Math.sin(t * 5.2)), 3) * .5 + .12;
+        const g5 = ctx.createRadialGradient(cam.w / 2, cam.h / 2, cam.h * .34, cam.w / 2, cam.h / 2, cam.h * .85);
+        g5.addColorStop(0, 'rgba(255,40,40,0)'); g5.addColorStop(1, `rgba(255,30,30,${(beat * .5).toFixed(3)})`);
+        ctx.fillStyle = g5; ctx.fillRect(0, 0, cam.w, cam.h);
+      }
     }
     ctx.restore();
   }
