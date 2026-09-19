@@ -5,12 +5,13 @@
 const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left',
   ArrowRight: 'right', KeyD: 'right',
-  ArrowUp: 'up', KeyW: 'up',
+  ArrowUp: 'up',
   ArrowDown: 'down', KeyS: 'down',
-  Space: 'jump', KeyK: 'jump',
+  Space: 'jump', KeyW: 'jump',
   KeyJ: 'attack', KeyX: 'attack',
   ShiftLeft: 'dodge', ShiftRight: 'dodge', KeyL: 'dodge',
   KeyC: 'special', KeyZ: 'special',
+  KeyV: 'surge',
   KeyQ: 'swap', Tab: 'swap',
   KeyE: 'interact', KeyF: 'interact',
   Escape: 'pause', KeyP: 'pause',
@@ -24,7 +25,7 @@ const KEYMAP = {
 
 const GP_MAP = { 0: 'jump', 1: 'dodge', 2: 'special', 3: 'swap', 4: 'dodge', 5: 'special', 9: 'pause', 8: 'pause', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
 
-export const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'attack', 'dodge', 'special', 'swap', 'interact', 'pause', 'confirm'];
+export const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'attack', 'dodge', 'special', 'swap', 'interact', 'pause', 'confirm', 'surge', 'cyclone'];
 
 export class Input {
   constructor(game) {
@@ -63,6 +64,9 @@ export class Input {
 
     window.addEventListener('keyup', (e) => { const act = (e.altKey && e.code === 'Enter') ? 'fullscreen' : KEYMAP[e.code]; if (act) setAct(act, false); });
     window.addEventListener('blur', () => { for (const a of Object.keys(this.held)) { if (this.held[a]) this.up[a] = true; this.held[a] = false; } });
+
+    window.addEventListener('contextmenu', (e) => { if (this.g.touchUI) e.preventDefault(); });
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
 
     // touch buttons
     document.querySelectorAll('#touch .tbtn').forEach((btn) => {

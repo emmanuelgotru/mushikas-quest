@@ -278,7 +278,7 @@ export class Screens {
     ];
     $('#ctrl-cols').innerHTML = `
       <div class="ctrl-col"><h4>Keyboard</h4>${rows.map((r) => `<div class="ctrl-row"><span style="display:flex;gap:4px">${r[1].map((k) => `<span class="kbd">${k}</span>`).join('')}<b style="margin-left:6px;font-family:var(--f-head);color:var(--gold-lt)">${r[0]}</b></span></div>`).join('')}
-      <div class="ctrl-note">Gamepad supported: left stick + A/B/X/Y. On phones a thumb-stick and four buttons appear automatically.</div></div>
+      <div class="ctrl-note">Gamepad supported: left stick + A/B/X/Y. On phones a thumb-stick, six action buttons, a pause button and contextual USE / SURGE buttons appear automatically.</div></div>
       <div class="ctrl-col"><h4>Combat Doctrine</h4>
         <div class="ctrl-note"><b>Bhakti</b> (the gold meter) powers every boon. It fills when you strike, defeat, dodge perfectly, and collect modaks. Toggles like True Sight and Smoke Form drain it continuously.</div>
         <div class="ctrl-note"><b>Armoured enemies</b> clang off the front. Bait their attack, run behind, and strike — or shatter them outright with Ekadanta's Charge.</div>

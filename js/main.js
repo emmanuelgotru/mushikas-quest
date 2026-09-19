@@ -83,6 +83,7 @@ class Game {
     document.body.classList.toggle('no-grain', !s.grain);
     const coarse = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
     const touch = s.touch === 'on' || (s.touch === 'auto' && coarse);
+    this.touchUI = touch;
     document.body.classList.toggle('touch-on', touch);
     document.getElementById('touch')?.classList.toggle('hidden', !(touch && ['play', 'dead'].includes(this.state)));
     document.body.classList.toggle('reduce-particles', s.particles < 1);
@@ -161,11 +162,11 @@ class Game {
     this.hud.show(true);
     this.hud.setDay(day, def.name);
     this.hud.objective(def.objective || 'Purify the realm', '');
+    this.touchUI = this.settings.touch === 'on' || (this.settings.touch === 'auto' && matchMedia('(pointer: coarse)').matches);
+    document.getElementById('touch')?.classList.toggle('hidden', !this.touchUI);
     if (this.settings.hints) this.hud.hint(def.hint, 6);
     this.audio.setMode(def.music?.mode || 'explore');
     this.audio.setIntensity(.5);
-    this.touchUI = this.settings.touch === 'on' || (this.settings.touch === 'auto' && matchMedia('(pointer: coarse)').matches);
-    document.getElementById('touch')?.classList.toggle('hidden', !this.touchUI);
     this.persist();
   }
 
@@ -576,10 +577,11 @@ class Game {
     if (c.t > 5.2) { c.t = 0; }                     // re-cue while a step is pending
     const step = c.step;
     if (c.t === dt || (c.t < dt * 1.5)) {           // just entered a step
-      if (step === 0) say('Walk with A / D', 'or push the left stick on touch');
-      if (step === 1) say('Jump with SPACE', 'hold it a moment longer to jump higher');
-      if (step === 2) say('Swipe with J', 'three-hit combo — the third hit knocks back');
-      if (step === 3) say('Dodge with SHIFT', 'a dodge mid-air covers great distance');
+      const T = this.touchUI;
+      if (step === 0) say(T ? 'Walk with the stick' : 'Walk with A / D', T ? 'your left thumb lives here' : 'or push the left stick on touch');
+      if (step === 1) say(T ? 'Jump with the JUMP button' : 'Jump with SPACE', T ? 'tap it again mid-air to double-jump' : 'hold it a moment longer to jump higher');
+      if (step === 2) say(T ? 'Swipe with the SWIPE button' : 'Swipe with J', 'three-hit combo — the third hit knocks back');
+      if (step === 3) say(T ? 'Dodge with the DODGE button' : 'Dodge with SHIFT', 'a dodge mid-air covers great distance');
     }
     if (step === 0) {
       if (I.held.left || I.held.right) c.held += dt; else c.held = 0;
@@ -610,7 +612,7 @@ class Game {
 
   /* ================================ RENDER =============================== */
   resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, this.touchUI ? 1.5 : 2);
     const W = Math.max(320, window.innerWidth), H = Math.max(240, window.innerHeight);
     this.canvas.width = Math.round(W * dpr); this.canvas.height = Math.round(H * dpr);
     this.canvas.style.width = W + 'px'; this.canvas.style.height = H + 'px';
