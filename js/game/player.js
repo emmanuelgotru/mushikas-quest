@@ -23,7 +23,7 @@ export class Player {
     this.invuln = 0; this.dead = false; this.deathT = 0;
     this.standing = null; this.inWater = false; this.drown = 0;
     this.cycT = 0; this.cycSpin = 0; this._cycHits = null;
-    this.runT = 0; this.animT = 0; this.blink = 0; this.squash = 1; this.stretch = 1; this.ghosts = []; this._ghostT = 0;
+    this.runT = 0; this.animT = 0; this.blink = 0; this.squash = 1; this.stretch = 1;
     this.tailT = 0; this.tailWhip = 0;
     // combat
     this.atk = null; this.comboStep = 0; this.comboTimer = 0;
@@ -379,7 +379,7 @@ export class Player {
     }
     if (this.jumpHold > 0) {
       this.jumpHold -= dt;
-      if (!input.isDown('jump')) { const heldFor = .22 - Math.max(0, this.jumpHold); this.jumpHold = 0; if (heldFor > .13 && this.vy < -200) this.vy *= .48; }
+      if (!input.isDown('jump')) { this.jumpHold = 0; if (this.vy < -200) this.vy *= .48; }
     }
     if (this.bouncePad) { this.vy = -1120; this.bouncePad = false; G.audio.sfx('dbljump'); this.squash = .62; this.stretch = 1.4; G.particles.ring(this.x + this.w / 2, this.y + this.h, 18, '#ff9fc4', .5); }
 
@@ -407,7 +407,7 @@ export class Player {
     if (input.pressed('special')) this.useSpecial(G);
     if (input.pressed('swap')) this.cycle(1);
     for (let i = 1; i <= 8; i++) if (input.pressed('b' + i)) this.selectBoon(i - 1);
-    if ((input.pressed('surge') || (input.pressed('up') && input.isDown('down'))) && this.bhakti >= this.maxBhakti) this.useSurge(G);
+    if (input.pressed('up') && this.bhakti >= this.maxBhakti && input.isDown('down')) this.useSurge(G);
 
     // shield maintenance
     if (this.shielded) {
@@ -564,13 +564,6 @@ export class Player {
     // squash & stretch relax
     this.squash = damp(this.squash, 1, 12, dt);
     this.stretch = damp(this.stretch, 1, 12, dt);
-    // dodge after-images
-    if (this.dodgeT > .05) {
-      this._ghostT -= dt;
-      if (this._ghostT <= 0) { this._ghostT = .035; this.ghosts.push({ x: this.x, y: this.y, f: this.facing, t: .3 }); }
-    }
-    for (const g of this.ghosts) g.t -= dt;
-    while (this.ghosts.length && this.ghosts[0].t <= 0) this.ghosts.shift();
     // world bounds
     this.x = clamp(this.x, 4, G.level.w - this.w - 4);
     if (this.y > 1800) this.hurt(G, 2, { src: 'pit', ky: -500, pierce: true, kx: 0 });
@@ -643,20 +636,9 @@ export class Player {
       this.drawBody(ctx, t, G, true);
       ctx.restore(); return;
     }
-    for (const g of this.ghosts) {
-      const gx = g.x + this.w / 2 - cam.cx, gy = g.y + this.h - cam.cy;
-      ctx.save(); ctx.globalAlpha = (g.t / .3) * .28; ctx.translate(gx, gy); ctx.scale(g.f, 1);
-      ctx.fillStyle = '#b9a7d6';
-      ctx.beginPath(); ctx.ellipse(0, -this.h * .38, this.w * .52, this.h * .4, 0, 0, TAU); ctx.fill();
-      ctx.beginPath(); ctx.arc(this.w * .12, -this.h * .82, this.w * .34, 0, TAU); ctx.fill();
-      ctx.restore();
-    }
     const flick = this.invuln > 0 && Math.floor(t * 26) % 2 === 0;
     ctx.save();
     ctx.translate(cx, cy);
-    const lean = this.onGround ? clamp(this.vx * .00042, -.13, .13) : clamp(this.vx * .0002, -.07, .07);
-    const breathe = this.onGround && Math.abs(this.vx) < 20 && !this.atk ? 1 + Math.sin(t * 2.4) * .014 : 1;
-    ctx.rotate(lean); ctx.scale(1, breathe);
     // shadow
     ctx.save(); ctx.globalAlpha = .34; ctx.fillStyle = '#000';
     const sh = this.onGround ? 1 : clamp(1 - Math.abs(this.vy) / 900, .35, 1);
@@ -679,18 +661,6 @@ export class Player {
     ctx.restore();
 
     this.drawBody(ctx, t, G, false);
-    if (this.atk && this.atk.t > this.atk.windup * .5) {
-      const k = clamp((this.atk.t - this.atk.windup * .5) / (this.atk.dur - this.atk.windup * .5), 0, 1);
-      const fin = this.atk.fin;
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = fin ? '#ffd775' : '#fff3d0';
-      ctx.lineWidth = fin ? 6 : 3.5; ctx.shadowColor = '#ff9a2f'; ctx.shadowBlur = fin ? 22 : 12;
-      const r0 = fin ? 40 : 30, sw = fin ? 2.6 : 2.0;
-      ctx.beginPath(); ctx.arc(this.facing * 6, -this.h * .52, r0 + k * 10, -sw / 2 + (k - .5) * 1.4, sw / 2 + (k - .5) * 1.4); ctx.stroke();
-      if (fin) { ctx.strokeStyle = 'rgba(255,243,208,.7)'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(this.facing * 6, -this.h * .52, r0 + 12 + k * 8, -sw / 2 + (k - .5) * 1.6, sw / 2 + (k - .5) * 1.6); ctx.stroke(); }
-      ctx.restore();
-    }
 
     if (this.shielded) {
       ctx.save(); ctx.globalCompositeOperation = 'lighter';

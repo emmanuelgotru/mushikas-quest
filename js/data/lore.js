@@ -229,7 +229,6 @@ export const CODEX_MUSHIKA = `
 export const CREDITS = [
   { h: '', p: 'MUSHIKA\u2019S QUEST', cls: 'big' },
   { h: '', p: 'Nine Days of Dharma' },
-  { h: 'A Game By', p: 'MYTHIC DEVELOPERS', cls: 'big' },
   { h: 'A Tribute', p: 'Made with reverence for the mythology of Shri Ganesha,<br>and with love for the action-platformers that raised us.' },
   { h: 'Design · Code · Art · Audio', p: 'A college project — every pixel, particle and note<br>procedurally generated in-browser. No art assets. No audio files.' },
   { h: 'The Nine Asuras', p: 'Matsarasura · Madasura · Mohasura · Lobhasura · Krodhasura<br>Kamasura · Mamatasura · Abhimanasura · Sindhu' },

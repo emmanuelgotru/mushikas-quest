@@ -20,13 +20,13 @@ export const RAGAS = {
 /* mode presets: bpm, raga, drum pattern (16 steps), intensity of layers */
 const MODES = {
   silence: null,
-  menu:    { bpm: 74,  raga: 'yaman',    sa: 0,  drums: 'D...t..d..t.T...', bass: .5, mel: .85, pad: .8,  drone: 1, swing: .06 },
-  explore: { bpm: 96,  raga: 'durga',    sa: 0,  drums: 'D..dt.dD..dt.T..', bass: .7, mel: .55, pad: .45, drone: 1, swing: .04 },
-  tension: { bpm: 112, raga: 'bhairav',  sa: 0,  drums: 'D.dtD.dtD.dtD.tt', bass: .8, mel: .5, pad: .5, drone: 1, swing: 0 },
-  boss:    { bpm: 142, raga: 'malkauns', sa: -2, drums: 'DdtdDdtdDdtdDdTt', bass: 1, mel: .8, pad: .3, drone: 1, swing: 0 },
-  final:   { bpm: 158, raga: 'marwa',    sa: -3, drums: 'DdTdDdTdDdTdDdTt', bass: 1, mel: .9, pad: .35, drone: 1, swing: 0 },
-  victory: { bpm: 120, raga: 'bhairavi', sa: 2,  drums: 'D..tD..tD.tTD.t.', bass: .6, mel: 1, pad: .9, drone: 1, swing: .08 },
-  shrine:  { bpm: 62,  raga: 'bhairavi', sa: 0,  drums: '................', bass: .2, mel: .8, pad: 1, drone: 1, swing: .1 },
+  menu:    { bpm: 74,  raga: 'yaman',    sa: 0,  drums: 'D...t.......t...', bass: .5, mel: .85, pad: .8,  drone: 1, swing: .08 },
+  explore: { bpm: 90,  raga: 'durga',    sa: 0,  drums: 'D..d....D..d..t.', bass: .7, mel: .55, pad: .45, drone: 1, swing: .05 },
+  tension: { bpm: 106, raga: 'bhairav',  sa: 0,  drums: 'D..d..D...d..d..', bass: .8, mel: .5, pad: .5, drone: 1, swing: 0 },
+  boss:    { bpm: 134, raga: 'malkauns', sa: -2, drums: 'D.d.D.d.D.dD.d..', bass: 1, mel: .8, pad: .3, drone: 1, swing: 0 },
+  final:   { bpm: 150, raga: 'marwa',    sa: -3, drums: 'D.d.D.dD.d.D.d..', bass: 1, mel: .9, pad: .35, drone: 1, swing: 0 },
+  victory: { bpm: 118, raga: 'bhairavi', sa: 2,  drums: 'D..t..D.t..t.D.t', bass: .6, mel: 1, pad: .9, drone: 1, swing: .09 },
+  shrine:  { bpm: 60,  raga: 'bhairavi', sa: 0,  drums: '................', bass: .2, mel: .8, pad: 1, drone: 1, swing: .12 },
 };
 
 export class AudioSys {
@@ -102,7 +102,8 @@ export class AudioSys {
     if (cfg) {
       this._sa = NOTE(cfg.sa + 12); // Sa frequency (C-ish base)
       this._scale = RAGAS[cfg.raga].notes;
-      this._melodyPlan = [];
+      let pi = 0, bd = 99; this._scale.forEach((sv, i2) => { const d = Math.abs(sv - 7); if (d < bd) { bd = d; pi = i2; } }); this._paDeg = pi;
+      this._melodyPlan = []; this._lastPhrase = null; this._phraseNo = 0;
       this._startDrone();
       this.musicBus.gain.cancelScheduledValues(this.ctx.currentTime);
       this.musicBus.gain.setTargetAtTime(this._musicTarget ?? this.musicVol, this.ctx.currentTime, .5);
@@ -127,7 +128,7 @@ export class AudioSys {
     while (this.nextTime < this.ctx.currentTime + .18) {
       this._playStep(this.step % 16, this.nextTime, spb);
       const sw = (this.step % 2 === 1) ? cfg.swing * spb : -cfg.swing * spb * .4;
-      this.nextTime += spb + (this.step % 16 === 15 ? 0 : 0) + sw * 0;
+      this.nextTime += spb + sw;
       this.step++;
       if (this.step % 16 === 0) this.bar++;
     }
@@ -142,11 +143,10 @@ export class AudioSys {
     else if (ch === 'd') this._drumLow(t, .55);
     else if (ch === 'T') { this._drumHigh(t, 1); this._drumShake(t, .5); }
     else if (ch === 't') this._drumHigh(t, .6);
-    if (s % 4 === 2 && I > .55) this._drumShake(t, .22 * I);
     // --- bass (on beat 1 & 3, walking) ---
-    if (cfg.bass && (s === 0 || s === 6 || s === 10) && (I > .3 || cfg.bass > .6)) {
-      const deg = [0, 4, 3, 5][((this.bar * 3 + s) >> 1) % 4];
-      this._pluck(this._deg(deg - 12), t, .55 * cfg.bass * (.5 + I * .5), .5, 'sine', 700);
+    if (cfg.bass && (s === 0 || s === 8 || (s === 14 && I > .6)) && (I > .3 || cfg.bass > .6)) {
+      const deg = s === 0 ? 0 : s === 8 ? (this._paDeg ?? 3) : (this._paDeg ?? 3) - 1;
+      this._pluck(this._deg(deg - 12), t, .6, .5 * cfg.bass * (.5 + I * .5), 'sine', 620);
     }
     // --- melody ---
     if (cfg.mel) {
@@ -154,40 +154,61 @@ export class AudioSys {
       const n = this._melodyPlan.shift();
       if (n && n.deg !== null) {
         const f = this._deg(n.deg);
-        if (cfg.mel > .8) this._flute(f, t, n.dur * spb, .3 * cfg.mel * (.4 + I * .6), n.bend);
-        else this._pluck(f, t, n.dur * spb * .9, .2 * cfg.mel * (.4 + I * .6), 'triangle', 2600, n.bend);
+        const hv = .85 + Math.random() * .3;
+        const ratio = n.glide ? this._deg(n.deg + n.glide) / f : 0;
+        if (cfg.mel > .8) this._flute(f, t, n.dur * spb, .3 * cfg.mel * (.4 + I * .6) * hv, ratio);
+        else this._pluck(f, t, n.dur * spb * .9, .2 * cfg.mel * (.4 + I * .6) * hv, 'triangle', 2600, ratio);
       }
     }
     // --- pad chord every 2 bars ---
-    if (cfg.pad && s === 0 && this.bar % 2 === 0) {
-      const base = [0, 3, 4, 0][this.bar % 4];
-      [0, 2, 4].forEach((iv, i) => this._pad(this._deg(base + iv), t, spb * 30, .05 * cfg.pad * (.5 + I * .5), i * 3));
+    if (cfg.pad && s === 0 && this.bar % 4 === 0) {
+      const base = [0, 3, 4, 2][(this.bar >> 2) % 4];
+      [0, 2].forEach((iv, i) => this._pad(this._deg(base + iv), t, spb * 60, .042 * cfg.pad * (.5 + I * .5), i * 4));
     }
   }
 
   _makePhrase(cfg, I) {
-    // generative raga phrase: 8 slots over one bar, motif-driven, with rests
-    const sc = this._scale;
-    const seedDeg = () => sc[(Math.random() * sc.length) | 0] + (Math.random() < .35 ? 12 : 0) + (Math.random() < .12 ? -12 : 0);
-    let deg = this._lastDeg ?? 0;
-    const density = .35 + I * .45 + (cfg.mel > .8 ? .15 : 0);
-    for (let i = 0; i < 16; i++) {
-      if (Math.random() > density) { this._melodyPlan.push(null); continue; }
-      // stepwise motion within the raga, occasional leap to vadi
-      if (Math.random() < .72) {
-        const idx = sc.indexOf(((deg % 12) + 12) % 12);
-        const step = (Math.random() < .5 ? -1 : 1) * (Math.random() < .8 ? 1 : 2);
-        const ni = idx < 0 ? (Math.random() * sc.length) | 0 : Math.max(0, Math.min(sc.length - 1, idx + step));
-        deg = sc[ni] + (deg >= 12 ? 12 : deg < 0 ? -12 : 0);
-      } else deg = seedDeg();
-      deg = Math.max(-5, Math.min(24, deg));
-      this._lastDeg = deg;
-      const dur = Math.random() < .75 ? 2 : 4;
-      this._melodyPlan.push({ deg, dur, bend: Math.random() < .3 ? (Math.random() < .5 ? -2 : 2) : 0 });
-      for (let k = 1; k < dur; k++) this._melodyPlan.push(null);
-      i += dur - 1;
+    /* Generative raga phrase with MOTIF MEMORY: forms repeat as A A' B A'',
+       arch-shaped contour (rise then fall), and always cadence on vadi or Sa. */
+    const sc = this._scale, n = sc.length;
+    const vadi = RAGAS[cfg.raga].vadi ?? 0;
+    this._phraseNo = (this._phraseNo || 0) + 1;
+    const pn = this._phraseNo;
+    const response = pn % 4 === 3;                    // every 4th phrase: sparse, low answer
+    const plan = [];
+    const push = (deg, dur, glide) => { plan.push({ deg, dur, glide: glide || 0 }); for (let k = 1; k < dur; k++) plan.push(null); };
+    if (!response && this._lastPhrase && pn % 4 !== 2 && Math.random() < .6) {
+      const tr = [0, 1, -1, 2][(Math.random() * 4) | 0];   // A' : transposed/ornamented repeat
+      for (const ev of this._lastPhrase) {
+        if (!ev) { plan.push(null); continue; }
+        const deg = Math.max(-5, Math.min(24, ev.deg + (Math.random() < .55 ? tr : 0)));
+        plan.push({ deg, dur: ev.dur, glide: Math.random() < .2 ? (Math.random() < .5 ? 1 : -1) : 0 });
+        for (let k = 1; k < ev.dur; k++) plan.push(null);
+      }
+    } else {
+      const density = (response ? .22 : .34) + I * .38 + (cfg.mel > .8 ? .12 : 0);
+      let deg = this._lastDeg ?? (Math.random() < .5 ? 0 : vadi);
+      if (response) deg -= 12;
+      const idxOf = (d) => sc.indexOf(((d % 12) + 12) % 12);
+      for (let i = 0; i < 12; i++) {
+        if (Math.random() > density) { plan.push(null); continue; }
+        const idx = idxOf(deg);
+        const bias = i < 6 ? .62 : .38;               // arch: rise, then fall home
+        const step = (Math.random() < bias ? 1 : -1) * (Math.random() < .82 ? 1 : 2);
+        const ni = idx < 0 ? (Math.random() * n) | 0 : Math.max(0, Math.min(n - 1, idx + step));
+        deg = sc[ni] + (deg >= 12 ? 12 : 0) + (deg < 0 ? -12 : 0);
+        deg = Math.max(-5, Math.min(19, deg));
+        const dur = Math.random() < .68 ? 2 : Math.random() < .8 ? 4 : 3;
+        push(deg, dur, Math.random() < .22 ? (Math.random() < .5 ? 1 : -1) : 0);
+        this._lastDeg = deg;
+        i += dur - 1;
+      }
+      push(pn % 2 ? vadi : 0, Math.random() < .5 ? 4 : 6, 1);   // cadence: long vadi/Sa
+      this._lastDeg = pn % 2 ? vadi : 0;
+      this._lastPhrase = plan;
     }
-    if (this._melodyPlan.length > 40) this._melodyPlan.length = 40;
+    for (const ev of plan) this._melodyPlan.push(ev);
+    if (this._melodyPlan.length > 48) this._melodyPlan.length = 48;
   }
 
   /** scale degree (diatonic index) → frequency, wrapping octaves */
@@ -231,9 +252,9 @@ export class AudioSys {
     const o = c.createOscillator(); o.type = type;
     const o2 = c.createOscillator(); o2.type = 'sawtooth'; o2.detune.value = -7;
     const g = c.createGain(); const f = c.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 3;
-    o.frequency.setValueAtTime(freq * (bend ? Math.pow(2, -bend / 12) : 1), t);
-    if (bend) o.frequency.exponentialRampToValueAtTime(freq, t + dur * .3);
-    o2.frequency.setValueAtTime(o.frequency.value, t); if (bend) o2.frequency.exponentialRampToValueAtTime(freq, t + dur * .3);
+    o.frequency.setValueAtTime(bend ? freq * bend : freq, t);
+    if (bend) o.frequency.exponentialRampToValueAtTime(freq, t + Math.min(.1, dur * .3));
+    o2.frequency.setValueAtTime(bend ? freq * bend : freq, t); if (bend) o2.frequency.exponentialRampToValueAtTime(freq, t + Math.min(.1, dur * .3));
     f.frequency.setValueAtTime(cut, t); f.frequency.exponentialRampToValueAtTime(Math.max(220, cut * .28), t + dur);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .008);
     g.gain.exponentialRampToValueAtTime(.0008, t + Math.max(.09, dur));
@@ -249,11 +270,13 @@ export class AudioSys {
     const o2 = c.createOscillator(); o2.type = 'triangle';
     const g = c.createGain(); const g2 = c.createGain(); g2.gain.value = .12;
     const vib = c.createOscillator(); vib.frequency.value = 5.3;
-    const vg = c.createGain(); vg.gain.value = freq * .011;
+    const vg = c.createGain(); vg.gain.value = 0;
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(freq * .011, t + .35);
     vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
-    o.frequency.setValueAtTime(freq * (bend ? Math.pow(2, bend / 12) : 1), t);
-    o.frequency.exponentialRampToValueAtTime(freq, t + dur * .22);
-    o2.frequency.value = o.frequency.value;
+    o.frequency.setValueAtTime(bend ? freq * bend : freq, t);
+    if (bend) o.frequency.exponentialRampToValueAtTime(freq, t + Math.min(.14, dur * .25));
+    o2.frequency.setValueAtTime(bend ? freq * bend : freq, t);
+    if (bend) o2.frequency.exponentialRampToValueAtTime(freq, t + Math.min(.14, dur * .25));
     // breath
     const nz = c.createBufferSource(); nz.buffer = this._noiseBuf; nz.loop = true;
     const nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = freq * 2.1; nf.Q.value = 1.4;
@@ -303,7 +326,7 @@ export class AudioSys {
     const o = c.createOscillator(); o.type = 'triangle';
     const g = c.createGain();
     o.frequency.setValueAtTime(760 + Math.random() * 90, t); o.frequency.exponentialRampToValueAtTime(340, t + .07);
-    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.24 * vol, t + .004);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.15 * vol, t + .004);
     g.gain.exponentialRampToValueAtTime(.0006, t + .13);
     o.connect(g); g.connect(this.musicBus); o.start(t); o.stop(t + .16);
     const nz = c.createBufferSource(); nz.buffer = this._noiseBuf;
@@ -317,7 +340,7 @@ export class AudioSys {
     const nz = c.createBufferSource(); nz.buffer = this._noiseBuf; nz.playbackRate.value = 1.6;
     const nf = c.createBiquadFilter(); nf.type = 'highpass'; nf.frequency.value = 5200;
     const g = c.createGain();
-    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.09 * vol, t + .006);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.055 * vol, t + .006);
     g.gain.exponentialRampToValueAtTime(.0005, t + .17);
     nz.connect(nf); nf.connect(g); g.connect(this.musicBus); nz.start(t); nz.stop(t + .2);
   }

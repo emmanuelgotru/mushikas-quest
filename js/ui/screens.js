@@ -29,7 +29,6 @@ export class Screens {
     if (this.current && this.current !== id) document.getElementById('screen-' + this.current)?.classList.remove('active');
     el.classList.add('active');
     this.current = id;
-    if (id === 'controls') this.buildControls();   // rebuild so touch/keyboard labels match the device
     this.G.onScreen?.(id, opts);
   }
   hide(id) { document.getElementById('screen-' + id)?.classList.remove('active'); }
@@ -262,28 +261,31 @@ export class Screens {
     if (k === 'difficulty') G.hud?.toast?.('Difficulty: ' + String(v).toUpperCase(), '⚔');
   }
   buildControls() {
-    const T = this.G.touchUI;
-    const cards = [
-      ['⇄', 'RUN', 'Move left and right', T ? 'Left stick' : 'A / D or ← →'],
-      ['▲', 'JUMP', 'Press again in mid-air to jump twice!', T ? 'JUMP button' : 'SPACE · W · ↑'],
-      ['✕', 'HIT', 'Tap-tap-tap — the 3rd hit is a BIG smash!', T ? 'SWIPE button' : 'J'],
-      ['◉', 'SPIN', 'Whirlwind! Hits everything around you', T ? 'SPIN button' : 'K'],
-      ['»', 'DASH', 'Super-quick dodge — nothing can touch you', T ? 'DODGE button' : 'SHIFT'],
-      ['✦', 'MAGIC', 'Use your special god-power', T ? 'SPECIAL button' : 'C'],
-      ['❈', 'TOUCH', 'Light shrines to save + heal, and open gates', T ? 'USE button (when it pops up)' : 'E or F'],
-      ['ॐ', 'SUPER!', 'Gold meter full? Go SUPER STRONG for 9 seconds!', T ? 'ॐ button' : 'V'],
+    const rows = [
+      ['Move', [['A', 'D'], ['←', '→']], 'Run left / right'],
+      ['Jump', [['SPACE'], ['W']], 'Hold for height · coyote-time & jump buffering'],
+      ['Tail Swipe', [['J'], ['X']], '3-hit combo · the third hit is a heavy launcher'],
+      ['Tail Cyclone', [['K']], 'Whirlwind strike hitting EVERYTHING around you — bosses included · 3s cooldown'],
+      ['Scamper Dodge', [['SHIFT'], ['L']], 'Invincible dash · time it as a blow lands for a DHARMA DODGE'],
+      ['Divine Boon', [['C'], ['Z']], 'Use the selected boon'],
+      ['Swap Boon', [['Q'], ['TAB']], 'Cycle boons · or press 1–8 directly'],
+      ['Siddhi Surge', [['V']], 'Spend a full Bhakti meter for 9s of divine power'],
+      ['Interact', [['F'], ['E']], 'Light shrines (checkpoint + heal) · open sealed gates'],
+      ['Pause', [['ESC'], ['P']], 'Menu · settings · restart day'],
+      ['Mute', [['M']], 'Toggle all audio'],
+      ['Fullscreen', [['ALT', 'ENTER']], 'True fullscreen — or the corner button on title / pause'],
+      ['Hint', [['H']], 'Stuck? Contextual guidance — also a button in the pause menu'],
     ];
     $('#ctrl-cols').innerHTML = `
-      <div class="kid-job">✦ <b>YOUR JOB:</b> run to the right → beat the big boss → win a NEW power → next day! Nine days, nine bosses. You can do it!</div>
-      <div class="kid-grid">${cards.map((c) => `
-        <div class="kid-card"><span class="kid-ico">${c[0]}</span><b class="kid-name">${c[1]}</b><span class="kid-say">${c[2]}</span><span class="kid-key">${c[3]}</span></div>`).join('')}
-      </div>
-      <div class="kid-tips">
-        <span>♥ Getting hit is okay — shrines ❈ bring you back!</span>
-        <span>? Stuck? Press <b>H</b>${T ? ' or the ? button in pause' : ''} for a friendly hint.</span>
-        <span>★ Too tough? Make it easier any time in <b>Settings</b>.</span>
-      </div>
-      <div class="ctrl-note kid-more">Grown-up keys: Q swap power · 1–8 pick a power · P pause · M sound on/off · Alt+Enter fullscreen · gamepads work too!</div>`;
+      <div class="ctrl-col"><h4>Keyboard</h4>${rows.map((r) => `<div class="ctrl-row"><span style="display:flex;gap:4px">${r[1].map((k) => `<span class="kbd">${k}</span>`).join('')}<b style="margin-left:6px;font-family:var(--f-head);color:var(--gold-lt)">${r[0]}</b></span></div>`).join('')}
+      <div class="ctrl-note">Gamepad supported: left stick + A/B/X/Y. On phones a thumb-stick and four buttons appear automatically.</div></div>
+      <div class="ctrl-col"><h4>Combat Doctrine</h4>
+        <div class="ctrl-note"><b>Bhakti</b> (the gold meter) powers every boon. It fills when you strike, defeat, dodge perfectly, and collect modaks. Toggles like True Sight and Smoke Form drain it continuously.</div>
+        <div class="ctrl-note"><b>Armoured enemies</b> clang off the front. Bait their attack, run behind, and strike — or shatter them outright with Ekadanta's Charge.</div>
+        <div class="ctrl-note"><b>Ego-guards cannot be hurt.</b> Become smoke, stay out of their vision cone, and strike from behind for an instant takedown.</div>
+        <div class="ctrl-note"><b>Shrines</b> are checkpoints. Light them — they restore all devotion and remember where you fell.</div>
+        <div class="ctrl-note"><b>Secrets:</b> cracked walls, hidden platforms and shadow-vents hide modaks and Siddhi Shards. Come back with later boons.</div>
+      </div>`;
   }
 
   /* -------------------------------- STORY -------------------------------- */
@@ -371,7 +373,6 @@ export class Screens {
   showVictory(stats, cb) {
     $('#win-inner').innerHTML = `
       <div class="win-title">Dharma Restored</div>
-      <div class="win-by">by Mythic Developers</div>
       <div class="win-deva">${SHLOKAS.gajananam.deva.replace(/\n/g, '<br>')}</div>
       <div class="win-tr">${SHLOKAS.gajananam.tr}</div>
       <div class="win-stats">

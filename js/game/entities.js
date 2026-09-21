@@ -263,12 +263,6 @@ export class Pickup {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     if (this.type === 'modak') {
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
-      const pr = .75 + .25 * Math.sin(t * 3 + this.x * .01);
-      const g = ctx.createRadialGradient(x, y, 2, x, y, 20 * pr);
-      g.addColorStop(0, 'rgba(255,214,102,.4)'); g.addColorStop(1, 'rgba(255,214,102,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 20 * pr, 0, TAU); ctx.fill();
-      ctx.restore();
       glow(ctx, x, y, 30, '#ffc761', .42 + Math.sin(this.age * 4) * .1);
       ctx.globalCompositeOperation = 'source-over';
       ctx.translate(x, y); ctx.rotate(Math.sin(this.age * 2) * .12);
